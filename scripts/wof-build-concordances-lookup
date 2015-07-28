@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+import sys
+import logging
+import pprint
+
+import mapzen.whosonfirst.utils
+import mapzen.whosonfirst.concordances
+
+if __name__ == '__main__':
+
+    import optparse
+    opt_parser = optparse.OptionParser()
+    
+    opt_parser.add_option('-s', '--source', dest='source', action='store', default=None, help='Where to read files from')
+    opt_parser.add_option('-d', '--database', dest='database', action='store', default=None, help='Where to write the concordances database (sqlite3)')
+
+    opt_parser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Be chatty (default is false)')
+    options, args = opt_parser.parse_args()
+
+    if options.verbose:	
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    db = os.path.abspath(options.db)
+    source = os.path.abspath(options.source)
+
+    imp = woe.isthat.importer(db)
+
+    crawl = mapzen.whosonfirst.utils.crawl(source, inflate=True)
+
+    for record in crawl:
+
+        props = record['properties']
+        wofid = props['wof:id']
+ 
+        concordances = props.get('wof:concordances', None)
+
+        for k, v in concordances.items():
+            imp.import_concordance(wofid, v, k)
+            
+    sys.exit()
