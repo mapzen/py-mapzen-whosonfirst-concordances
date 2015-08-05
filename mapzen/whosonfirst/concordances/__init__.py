@@ -1,116 +1,51 @@
 # https://pythonhosted.org/setuptools/setuptools.html#namespace-packages
 __import__('pkg_resources').declare_namespace(__name__)
 
-import sqlite3
-import os.path
+import sys
 import logging
-import csv
+import psycopg2
 
-class base:
-
-    def __init__(self):
-
-        self.conn = None
-        self.curs = None
-
-    def this_id(self, that_id):
+def cfg2dsn(cfg, sect):
         
-        that_id = unicode(that_id)
+    db_user = cfg.get(sect, 'db_user')
+    db_pswd = cfg.get(sect, 'db_pswd')
+    db_host = cfg.get(sect, 'db_host')
+    db_name = cfg.get(sect, 'db_name')
+    
+    dsn = "dbname=%s user=%s password=%s host=%s" % (db_name, db_user, db_pswd, db_host)
+    return dsn
 
-        sql = "SELECT this_id FROM concordances WHERE that_id=?"
+class db:
 
-        self.curs.execute(sql, (that_id,))
-        row = self.curs.fetchone()
+    def __init__(self, dsn):
 
-        if row:
-            return row[0]
+        conn = psycopg2.connect(dsn)
+        curs = conn.cursor()
 
-        return 0
+        self.conn = conn
+        self.curs = curs
 
-    def that_id(self, this_id):
+class index(db):
 
-        this_is = unicode(this_id)
+    def import_concordance(self, wof_id, other_id, other_src=''):
 
-        sql = "SELECT that_id FROM concordances WHERE this_id=?"
+        sql = "INSERT INTO concordances (wof_id, other_id, other_src) VALUES (%s, %s, %s)"
+        params = (wof_id, other_id, other_src)
 
-        self.curs.execute(sql, (this_id,))
-        row = self.curs.fetchone()
+        logging.debug("import %s" % str(params))
 
-        if row:
-            return row[0]
-
-        return 0
-
-class importer(base):
-
-    def __init__(self, db):
-
-        base.__init__(self)
-        self.db = db
-
-        if os.path.exists(db):
-
-            self.conn = sqlite3.connect(db)
-            self.curs = self.conn.cursor()
-
-        else:
-
-            self.conn = sqlite3.connect(db)
-            self.curs = self.conn.cursor()
-
-            self.curs.execute("""CREATE TABLE concordances (this_id PRIMARY KEY ASC, that_id, that_isa)""")
-            self.curs.execute("""CREATE UNIQUE INDEX by_woe ON concordances(this_id, that_id, that_isa)""")
-            self.conn.commit()
-
-    # generic csv importer tool thingy where the first row is always
-    # assumed to be the woe id and an INTEGER as per above (which maybe
-    # we want to change... (20150622/thisisaaronland)
-
-    def import_csv(self, path):
-
-        path = os.path.abspath(path)
-
-        fh = open(path, 'r')
-        reader = csv.reader(fh)
-        
-        for row in reader:
-            this_id, that_id, that_isa = row
-
-            self.import_concordance(this_id, that_id, that_isa)
-
-    # https://github.com/foursquare/twofishes/raw/master/data/computed/concordances.txt
-
-    def import_twofishes(self, path):
-
-        path = os.path.abspath(path)
-        fh = open(path, 'r')
-
-        for ln in fh.readlines():
-
-            ln = ln.strip()
-            gnid, woeid = ln.split('\t')
-            
-            ignore, gnid = gnid.split(':')
-            ignore, woeid = woeid.split(':')
-
-            self.import_concordance(woeid, gnid, 'geonames')
-
-    def import_concordance(self, this_id, that_id, that_isa=''):
-
-        sql = "INSERT INTO concordances VALUES ('%s', '%s')" % (this_id, that_id, that_isa)
-        
         try:
-            self.curs.execute(sql)
+            self.curs.execute(sql, params)
             self.conn.commit()
+        except psycopg2.IntegrityError, e:
+            logging.debug("%s is already concordified with %s %s" % (wof_id, other_src, other_id))
+            self.conn.rollback()
         except Exception, e:
-            logging.error(e)
-            logging.debug(sql)
+            logging.error("failed to concordify %s because %s" % (wof_id, e))
+            self.conn.rollback()
+            raise Exception, e
 
-class lookup(base):
+class query(db):
 
-    def __init__(self, db):
-        
-        base.__init__(self)
-
-        self.conn = sqlite3.connect(db)
-        self.curs = self.conn.cursor()
+    def by_wof_if(self, wof_id):
+        pass
