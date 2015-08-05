@@ -14,9 +14,8 @@ if __name__ == '__main__':
     import optparse
     import ConfigParser
 
-    opt_parser = optparse.OptionParser()
+    opt_parser = optparse.OptionParser("""usage: wof-index-concordance -c /path/to/config /path/to/one/source /path/to/another/source""")
     
-    opt_parser.add_option('-s', '--source', dest='source', action='store', default=None, help='Where to read files from')
     opt_parser.add_option('-c', '--config', dest='config', action='store', default=None, help='...')
 
     opt_parser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Be chatty (default is false)')
@@ -37,17 +36,25 @@ if __name__ == '__main__':
     dsn = mapzen.whosonfirst.concordances.cfg2dsn(cfg, 'whosonfirst')
     idx = mapzen.whosonfirst.concordances.index(dsn)
 
-    source = os.path.abspath(options.source)
-    crawl = mapzen.whosonfirst.utils.crawl(source, inflate=True)
+    for source in args:
 
-    for record in crawl:
+        logging.debug("import %s" % source)
 
-        props = record['properties']
-        wofid = props['wof:id']
- 
-        concordances = props.get('wof:concordances', None)
+        source = os.path.abspath(source)
+        crawl = mapzen.whosonfirst.utils.crawl(source, inflate=True)
 
-        for k, v in concordances.items():
-            idx.import_concordance(wofid, v, k)
+        for record in crawl:
+
+            props = record['properties']
+            wofid = props['wof:id']
+            
+            concordances = props.get('wof:concordances', {})
+
+            if not concordances:
+                logging.warning("%s has malformed concordances: %s" % (wofid, str(concordances)))
+                continue
+
+            for k, v in concordances.items():
+                idx.import_concordance(wofid, v, k)
             
     sys.exit()
