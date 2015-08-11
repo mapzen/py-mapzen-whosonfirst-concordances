@@ -47,5 +47,20 @@ class index(db):
 
 class query(db):
 
-    def by_wof_if(self, wof_id):
-        pass
+    def by_wof_id(self, wof_id):
+
+        sql = "SELECT * FROM concordances WHERE wof_id=%s"
+        params = (wof_id,)
+
+        self.curs.execute(sql, params)
+
+        for row in self.curs.fetchall():
+            yield row
+
+    def by_other_id(self, other_id, other_src):
+
+        sql = "SELECT * FROM concordances WHERE other_src=%s AND other_id=%s"
+        params = map(str, (other_src, other_id))
+
+        self.curs.execute(sql, params)
+        return self.curs.fetchone()
