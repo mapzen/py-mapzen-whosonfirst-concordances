@@ -73,6 +73,14 @@ class query(db):
         for row in self.curs.fetchall():
             yield row
 
+    def by_wof_id_for_other(self, wof_id, other_src):
+
+        sql = "SELECT * FROM concordances WHERE wof_id=%s AND other_src=%s"
+        params = (wof_id, other_src)
+
+        self.curs.execute(sql, params)
+        return self.curs.fetchone()
+
     def by_other_id(self, other_id, other_src):
 
         sql = "SELECT * FROM concordances WHERE other_src=%s AND other_id=%s"
