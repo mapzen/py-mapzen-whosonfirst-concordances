@@ -18,6 +18,7 @@ setup(
         ],
     packages=packages,
     scripts=[
+        'scripts/wof-dump-concordances',
         'scripts/wof-index-concordances',
         ],
     download_url='https://github.com/mapzen/py-mapzen-whosonfirst-concordances/releases/tag/v0.01',

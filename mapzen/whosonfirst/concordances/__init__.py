@@ -47,6 +47,22 @@ class index(db):
 
 class query(db):
 
+    def others(self):
+
+        sql = "SELECT DISTINCT(other_src) FROM concordances"
+        self.curs.execute(sql)
+
+        for row in self.curs.fetchall():
+            yield row[0]
+        
+    def dump(self):
+
+        sql = "SELECT * FROM concordances"
+        self.curs.execute(sql)
+
+        for row in self.curs.fetchall():
+            yield row
+        
     def by_wof_id(self, wof_id):
 
         sql = "SELECT * FROM concordances WHERE wof_id=%s"

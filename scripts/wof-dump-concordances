@@ -1,0 +1,127 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+import os.path
+import sys
+import logging
+import pprint
+import csv
+import copy
+import time
+import shutil
+
+import mapzen.whosonfirst.concordances
+
+if __name__ == '__main__':
+
+    import optparse
+    import ConfigParser
+
+    opt_parser = optparse.OptionParser("""usage: wof-dump-concordance -c /path/to/config /path/to/one/source""")
+    
+    opt_parser.add_option('-c', '--config', dest='config', action='store', default=None, help='...')
+    opt_parser.add_option('-i', '--include', dest='include', action='store', default=None, help='...')
+    opt_parser.add_option('-e', '--exclude', dest='exclude', action='store', default=None, help='...')
+    opt_parser.add_option('-o', '--out', dest='out', action='store', default=None, help='...')
+    opt_parser.add_option('-l', '--latest', dest='latest', action='store_true', default=False, help='...')
+
+    opt_parser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Be chatty (default is false)')
+    options, args = opt_parser.parse_args()
+
+    if options.verbose:	
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    if not os.path.exists(options.config):
+        logging.error("Missing config file")
+        sys.exit()
+
+    cfg = ConfigParser.ConfigParser()
+    cfg.read(options.config)
+
+    dsn = mapzen.whosonfirst.concordances.cfg2dsn(cfg, 'concordances')
+    qry = mapzen.whosonfirst.concordances.query(dsn)
+
+    #
+
+    defaults = {
+        'wof:id': 0
+    }
+
+    others = list(qry.others())
+    include = []
+    exclude = []
+
+    if options.include:
+        include = options.include.split(",")
+
+    if options.exclude:
+        exclude = options.exclude.split(",")
+
+    for src in others:
+
+        if len(include) and src in include:
+            defaults[src] = 0
+        elif len(exclude) and src in exclude:
+            pass
+        else:
+            defaults[src] = 0
+
+    #
+
+    dump_path = None
+
+    if options.out:
+
+        root = os.path.abspath(options.out)
+
+        if not os.path.exists(root):
+            logging.error("%s does not exist" % root)
+            sys.exit()
+
+        now = time.gmtime()
+        ymd = time.strftime("%Y%m%d", now)
+
+        fname = "wof-concordances-%s.csv" % ymd
+
+        dump_path = os.path.join(root, fname)
+        fh = open(dump_path, 'w')
+    else:
+        fh = sys.stdout
+
+    #
+
+    fn = defaults.keys()
+    
+    writer = csv.DictWriter(fh, fieldnames=fn)
+    writer.writeheader()
+
+    #
+
+    for row in qry.dump():
+
+        wofid, other_id, other_src = row
+
+        if not defaults.has_key(other_src):
+            continue
+
+        out = copy.deepcopy(defaults)
+
+        out['wof:id'] = wofid
+        out[other_src] = other_id
+
+        writer.writerow(out)
+
+    #
+
+    if options.latest:
+
+        root = os.path.abspath(options.out)
+        fname = "wof-concordances-latest.csv"
+        latest_path = os.path.join(root, fname)
+
+        logging.info("copy %s to %s" % (dump_path, latest_path))
+        shutil.copy(path, latest_path)
+
+    sys.exit()
