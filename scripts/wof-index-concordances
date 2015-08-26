@@ -5,6 +5,7 @@ import os.path
 import sys
 import logging
 import pprint
+import types
 
 import mapzen.whosonfirst.utils
 import mapzen.whosonfirst.concordances
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     cfg = ConfigParser.ConfigParser()
     cfg.read(options.config)
 
-    dsn = mapzen.whosonfirst.concordances.cfg2dsn(cfg, 'whosonfirst')
+    dsn = mapzen.whosonfirst.concordances.cfg2dsn(cfg, 'concordances')
     idx = mapzen.whosonfirst.concordances.index(dsn)
 
     for source in args:
@@ -54,7 +55,10 @@ if __name__ == '__main__':
                 logging.warning("%s has malformed concordances: %s" % (wofid, str(concordances)))
                 continue
 
-            for k, v in concordances.items():
-                idx.import_concordance(wofid, v, k)
-            
+            if type(concordances) != types.DictType:
+                logging.warning("%s has malformed concordances: %s" % (wofid, str(concordances)))
+                continue
+
+            idx.import_concordances(wofid, concordances, purge=True)
+
     sys.exit()

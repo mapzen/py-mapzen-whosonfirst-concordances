@@ -27,6 +27,14 @@ class db:
 
 class index(db):
 
+    def import_concordances(self, wof_id, concordances, **kwargs):
+
+        if kwargs.get('purge', False):
+            self.purge_concordances(wof_id)
+
+        for other_src, other_id in concordances.items():
+            self.import_concordance(wof_id, other_id, other_src)
+
     def import_concordance(self, wof_id, other_id, other_src=''):
 
         sql = "INSERT INTO concordances (wof_id, other_id, other_src) VALUES (%s, %s, %s)"
@@ -44,6 +52,20 @@ class index(db):
             logging.error("failed to concordify %s because %s" % (wof_id, e))
             self.conn.rollback()
             raise Exception, e
+
+    def purge_concordances(self, wof_id):
+
+        sql = "DELETE FROM concordances WHERE wof_id=%s"
+        params = (wof_id,)
+
+        try:
+            self.curs.execute(sql, params)
+            self.conn.commit()
+        except Exception, e:
+            logging.error("failed to purge concordances for %s, because %s" % (wof_id, e))
+            self.conn.rollback()
+            raise Exception, e
+            
 
 class query(db):
 
