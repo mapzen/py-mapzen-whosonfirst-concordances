@@ -52,7 +52,7 @@ if __name__ == '__main__':
             concordances = props.get('wof:concordances', {})
 
             if not concordances:
-                logging.warning("%s has malformed concordances: %s" % (wofid, str(concordances)))
+                logging.warning("%s has no concordances: %s" % (wofid, str(concordances)))
                 continue
 
             if type(concordances) != types.DictType:
