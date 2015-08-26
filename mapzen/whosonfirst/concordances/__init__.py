@@ -85,6 +85,14 @@ class query(db):
         for row in self.curs.fetchall():
             yield row
         
+    def wof_ids(self):
+
+        sql = "SELECT DISTINCT(wof_id) AS wof_id FROM concordances"
+        self.curs.execute(sql)
+
+        for row in self.curs.fetchall():
+            yield row
+
     def by_wof_id(self, wof_id):
 
         sql = "SELECT * FROM concordances WHERE wof_id=%s"

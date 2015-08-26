@@ -93,23 +93,31 @@ if __name__ == '__main__':
     #
 
     fn = defaults.keys()
-    
+    fn.sort()
+
     writer = csv.DictWriter(fh, fieldnames=fn)
     writer.writeheader()
 
     #
 
-    for row in qry.dump():
+    for row in qry.wof_ids():
 
-        wofid, other_id, other_src = row
+        wof_id = row[0]
 
-        if not defaults.has_key(other_src):
-            continue
+        if wof_id == 0:
+            continue	# wuh...
 
         out = copy.deepcopy(defaults)
+        out['wof:id'] = wof_id
 
-        out['wof:id'] = wofid
-        out[other_src] = other_id
+        for row2 in qry.by_wof_id(wof_id):
+
+            wofid, other_id, other_src = row2
+
+            if not defaults.has_key(other_src):
+                continue
+    
+            out[other_src] = other_id
 
         writer.writerow(out)
 
