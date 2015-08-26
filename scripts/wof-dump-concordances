@@ -110,6 +110,8 @@ if __name__ == '__main__':
         out = copy.deepcopy(defaults)
         out['wof:id'] = wof_id
 
+        others = 0
+
         for row2 in qry.by_wof_id(wof_id):
 
             wofid, other_id, other_src = row2
@@ -118,8 +120,10 @@ if __name__ == '__main__':
                 continue
     
             out[other_src] = other_id
+            others += 1
 
-        writer.writerow(out)
+        if others >=1 :
+            writer.writerow(out)
 
     #
 
