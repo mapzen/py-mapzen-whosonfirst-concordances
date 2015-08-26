@@ -122,6 +122,6 @@ if __name__ == '__main__':
         latest_path = os.path.join(root, fname)
 
         logging.info("copy %s to %s" % (dump_path, latest_path))
-        shutil.copy(path, latest_path)
-
+        shutil.copy(dump_path, latest_path)
+        
     sys.exit()
