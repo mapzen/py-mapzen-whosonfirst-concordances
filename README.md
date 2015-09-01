@@ -2,6 +2,10 @@
 
 Tools for indexing and querying Who's On First concordances in Postgres (though you could swap out the database library for any SQL database).
 
+## IMPORTANT
+
+This library is provided as-is, right now. It lacks proper documentation which will probably make it hard for you to use unless you are willing to poke and around and investigate things on your own.
+
 ## Usage
 
 ### Indexing
