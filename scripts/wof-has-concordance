@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+import sys
+import os.path
+import logging
+import mapzen.whosonfirst.concordances
+
+if __name__ == '__main__':
+
+    import optparse
+    import ConfigParser
+
+    opt_parser = optparse.OptionParser("""usage: wof-dump-concordance -c /path/to/config /path/to/one/source""")
+    
+    opt_parser.add_option('-c', '--config', dest='config', action='store', default=None, help='...')
+    opt_parser.add_option('-s', '--source', dest='source', action='store', default=None, help='...')
+    opt_parser.add_option('-i', '--id', dest='id', action='store', default=None, help='...')
+    opt_parser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Be chatty (default is false)')
+    options, args = opt_parser.parse_args()
+
+    if options.verbose:	
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    if not os.path.exists(options.config):
+        logging.error("Missing config file")
+        sys.exit()
+
+    cfg = ConfigParser.ConfigParser()
+    cfg.read(options.config)
+
+    dsn = mapzen.whosonfirst.concordances.cfg2dsn(cfg, 'concordances')
+    qry = mapzen.whosonfirst.concordances.query(dsn)
+
+    other_src = options.source
+    other_id = options.id
+
+    logging.debug("lookup %s:%s" % (other_src, other_id))
+
+    row = qry.by_other_id(other_id, other_src)
+    logging.info(row)
