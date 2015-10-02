@@ -85,10 +85,24 @@ class query(db):
         for row in self.curs.fetchall():
             yield row
         
-    def wof_ids(self):
+    def wof_ids(self, exclude=[]):
 
         sql = "SELECT DISTINCT(wof_id) AS wof_id FROM concordances"
-        self.curs.execute(sql)
+        params = []
+
+        if len(exclude):
+
+            placeholders = []
+
+            for e in exclude:
+                params.append(e)
+                placeholders.append("%" + "s")
+
+            placeholders = ",".join(placeholders)
+
+            sql += " WHERE other_src NOT IN (" + placeholders + ")"
+
+        self.curs.execute(sql, params)
 
         for row in self.curs.fetchall():
             yield row

@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     #
 
-    for row in qry.wof_ids():
+    for row in qry.wof_ids(exclude):
 
         wof_id = row[0]
 
