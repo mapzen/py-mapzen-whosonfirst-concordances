@@ -48,17 +48,19 @@ if __name__ == '__main__':
 
             props = record['properties']
             wofid = props['wof:id']
-            
+
+            idx.purge_concordances(wofid)
+
             concordances = props.get('wof:concordances', {})
 
-            if not concordances:
+            if props.get('wof:geomhash', False):
+                concordances['wof:geomhash'] = props.get('wof:geomhash')
+
+            if len(concordances.keys()) == 0:
                 logging.warning("%s has no concordances: %s" % (wofid, str(concordances)))
                 continue
 
-            if type(concordances) != types.DictType:
-                logging.warning("%s has malformed concordances: %s" % (wofid, str(concordances)))
-                continue
-
+            logging.debug(concordances)
             idx.import_concordances(wofid, concordances, purge=True)
 
     sys.exit()
