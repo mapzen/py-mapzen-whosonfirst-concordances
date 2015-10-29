@@ -58,6 +58,8 @@ class index(db):
         sql = "DELETE FROM concordances WHERE wof_id=%s"
         params = (wof_id,)
 
+        logging.debug(sql % params)
+
         try:
             self.curs.execute(sql, params)
             self.conn.commit()
