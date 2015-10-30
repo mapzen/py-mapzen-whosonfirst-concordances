@@ -62,8 +62,6 @@ if __name__ == '__main__':
             props = feature['properties']
             wofid = props['wof:id']
 
-            idx.purge_concordances(wofid)
-
             concordances = props.get('wof:concordances', {})
 
             if type(concordances) != types.DictType:
