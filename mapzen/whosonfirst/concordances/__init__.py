@@ -1,12 +1,10 @@
 # https://pythonhosted.org/setuptools/setuptools.html#namespace-packages
-__import__('pkg_resources').declare_namespace(__name__)
+# __import__('pkg_resources').declare_namespace(__name__)
 
 import sys
 import logging
-import psycopg2
 
 def cfg2dsn(cfg, sect):
-        
     db_user = cfg.get(sect, 'db_user')
     db_pswd = cfg.get(sect, 'db_pswd')
     db_host = cfg.get(sect, 'db_host')
@@ -17,10 +15,24 @@ def cfg2dsn(cfg, sect):
 
 class db:
 
-    def __init__(self, dsn):
+    def __init__(self, dsn, **kwargs):
 
-        conn = psycopg2.connect(dsn)
-        curs = conn.cursor()
+        engine = kwargs.get('engine', 'sqlite3')
+
+        if engine == 'psycopg2':            
+
+            import pyscopg2                
+            conn = psycopg2.connect(dsn)
+            curs = conn.cursor()
+
+        elif engine != "sqlite3":
+            raise Exception, "Unsupported database engine"
+
+        else:
+
+            import sqlite3
+            conn = sqlite3.connect(dsn)
+            curs = conn.cursor()
 
         self.conn = conn
         self.curs = curs
@@ -45,9 +57,11 @@ class index(db):
         try:
             self.curs.execute(sql, params)
             self.conn.commit()
+
         except psycopg2.IntegrityError, e:
             logging.debug("%s is already concordified with %s %s" % (wof_id, other_src, other_id))
             self.conn.rollback()
+
         except Exception, e:
             logging.error("failed to concordify %s because %s" % (wof_id, e))
             self.conn.rollback()
