@@ -24,6 +24,7 @@ class db:
             import pyscopg2                
             conn = psycopg2.connect(dsn)
             curs = conn.cursor()
+            placeholder = "%" + "s"
 
         elif engine != "sqlite3":
             raise Exception, "Unsupported database engine"
@@ -33,9 +34,12 @@ class db:
             import sqlite3
             conn = sqlite3.connect(dsn)
             curs = conn.cursor()
+            placeholder = "?"
 
         self.conn = conn
         self.curs = curs
+        self.placeholder = placeholder
+
 
 class index(db):
 
@@ -49,7 +53,7 @@ class index(db):
 
     def import_concordance(self, wof_id, other_id, other_src=''):
 
-        sql = "INSERT INTO concordances (wof_id, other_id, other_src) VALUES (%s, %s, %s)"
+        sql = "INSERT INTO concordances (wof_id, other_id, other_src) VALUES (%s, %s, %s)" % (self.placeholder, self.placeholder, self.placeholder)
         params = (wof_id, other_id, other_src)
 
         logging.debug("import %s" % str(params))
@@ -58,10 +62,13 @@ class index(db):
             self.curs.execute(sql, params)
             self.conn.commit()
 
-        except psycopg2.IntegrityError, e:
-            logging.debug("%s is already concordified with %s %s" % (wof_id, other_src, other_id))
-            self.conn.rollback()
-
+            # Please trap me and check type(e) I guess...
+            # (20151208/thisisaaronland)
+            #
+            #        except psycopg2.IntegrityError, e:
+            #            logging.debug("%s is already concordified with %s %s" % (wof_id, other_src, other_id))
+            #            self.conn.rollback()
+            
         except Exception, e:
             logging.error("failed to concordify %s because %s" % (wof_id, e))
             self.conn.rollback()
@@ -69,7 +76,7 @@ class index(db):
 
     def purge_concordances(self, wof_id):
 
-        sql = "DELETE FROM concordances WHERE wof_id=%s"
+        sql = "DELETE FROM concordances WHERE wof_id=%s" % self.placeholder
         params = (wof_id,)
 
         logging.debug(sql % params)
@@ -112,7 +119,7 @@ class query(db):
 
             for e in exclude:
                 params.append(e)
-                placeholders.append("%" + "s")
+                placeholders.append(self.placeholder)
 
             placeholders = ",".join(placeholders)
 
@@ -125,7 +132,7 @@ class query(db):
 
     def by_wof_id(self, wof_id):
 
-        sql = "SELECT * FROM concordances WHERE wof_id=%s"
+        sql = "SELECT * FROM concordances WHERE wof_id=%s" % self.placeholder
         params = (wof_id,)
 
         self.curs.execute(sql, params)
@@ -135,7 +142,7 @@ class query(db):
 
     def by_wof_id_for_other(self, wof_id, other_src):
 
-        sql = "SELECT * FROM concordances WHERE wof_id=%s AND other_src=%s"
+        sql = "SELECT * FROM concordances WHERE wof_id=%s AND other_src=%s" % self.placeholder
         params = (wof_id, other_src)
 
         self.curs.execute(sql, params)
@@ -143,7 +150,7 @@ class query(db):
 
     def by_other_id(self, other_id, other_src):
 
-        sql = "SELECT * FROM concordances WHERE other_src=%s AND other_id=%s"
+        sql = "SELECT * FROM concordances WHERE other_src=%s AND other_id=%s" % (self.placeholder, self.placeholder)
         params = map(str, (other_src, other_id))
 
         self.curs.execute(sql, params)
