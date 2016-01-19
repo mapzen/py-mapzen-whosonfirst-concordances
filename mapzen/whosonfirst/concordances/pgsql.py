@@ -1,16 +1,8 @@
 # https://pythonhosted.org/setuptools/setuptools.html#namespace-packages
-__import__('pkg_resources').declare_namespace(__name__)
-
-# THIS IS OFFICIALLY DEPRECATED. YOU SHOULD BE USING
-# mapzen.whosonfirst.concordances.pgsql INSTEAD. THIS
-# WILL GO AWAY. BYE BYE... (20160118/thisisaaronland)
+# __import__('pkg_resources').declare_namespace(__name__)
 
 import sys
 import logging
-
-# HEY LOOK - RUNNING CODE...
-
-logging.warning("PLEASE STOP IMPORTING mapzen.whosonfirst.concordances and USE mapzen.whosonfirst.concordances.pgsql INSTEAD")
 
 # We import psycopg2 below to prevent it from freaking out and making
 # OSX cry because installing things there is ... an adventure

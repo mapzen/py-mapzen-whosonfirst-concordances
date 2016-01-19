@@ -8,7 +8,7 @@ desc = open("README.md").read(),
 setup(
     name='mapzen.whosonfirst.concordances',
     namespace_packages=['mapzen', 'mapzen.whosonfirst', 'mapzen.whosonfirst.concordances'],
-    version='0.05',
+    version='0.06',
     description='Tools for working with Who\'s On First concordances',
     author='Mapzen',
     url='https://github.com/mapzen/py-mapzen-whosonfirst-concordances',
@@ -21,5 +21,5 @@ setup(
         'scripts/wof-dump-concordances',
         'scripts/wof-index-concordances',
         ],
-    download_url='https://github.com/mapzen/py-mapzen-whosonfirst-concordances/releases/tag/v0.05',
+    download_url='https://github.com/mapzen/py-mapzen-whosonfirst-concordances/releases/tag/v0.06',
     license='BSD')
